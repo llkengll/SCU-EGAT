@@ -1,0 +1,20 @@
+services:
+  ml-server:
+    build:
+      context: .
+    container_name: scu-ml-engine
+    ports:
+      - "5005:5000" # Mapping to host port 5005 to avoid Mac system port 5000 conflicts
+
+    env_file:
+      - ../.env
+    restart: always
+    volumes:
+      - .:/app # Keep app updated for local dev
+      - ./models:/app/models # Persistence for local dev
+    networks:
+      - scu-shared-network
+
+networks:
+  scu-shared-network:
+    external: true

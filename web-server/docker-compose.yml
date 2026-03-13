@@ -1,0 +1,43 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: scu-web-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    restart: always
+    networks:
+      - scu-shared-network
+
+  web-frontend:
+    build:
+      context: ./client
+    container_name: scu-web-frontend
+    env_file:
+      - ../.env
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    restart: always
+    networks:
+      - scu-shared-network
+
+  web-backend:
+    build:
+      context: ./backend
+    container_name: scu-web-backend
+    env_file:
+      - ../.env
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: always
+    networks:
+      - scu-shared-network
+
+networks:
+  scu-shared-network:
+    external: true

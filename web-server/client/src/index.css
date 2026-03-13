@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Iosevka Charon Mono", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Iosevka Charon Mono", monospace;
+  --color-primary: #1e3a8a;
+  --color-primary-dark: #1e3b8a;
+  --color-primary-light: #2563eb;
+  --color-secondary: #facc15;
+  --color-secondary-dark: #eab308;
+  --color-secondary-light: #fde047;
+  --color-accent: #0891b2;
+
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+:root {
+  --color-primary: #1e3a8a;
+  --color-secondary: #facc15;
+  --color-accent: #0891b2;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-blur: blur(12px);
+}
+
+@layer base {
+  * {
+    @apply border-gray-200 outline-none;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#1e3a8a] to-[#0891b2];
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-700/50 rounded-full hover:bg-slate-600/50 transition-colors;
+  }
+
+  /* Support for dark terminal */
+  .bg-slate-900 .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-600/30 hover:bg-slate-500/50;
+  }
+
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
