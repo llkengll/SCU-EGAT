@@ -244,6 +244,31 @@ const deleteMachine = async (req, res) => {
     }
 };
 
+const searchMachines = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) return res.status(200).json([]);
+
+        const { Op } = require('sequelize');
+        
+        // Query machine_master
+        const machines = await MachineMaster.findAll({
+            where: {
+                [Op.or]: [
+                    { kks: { [Op.iLike]: `%${q}%` } },
+                    { name: { [Op.iLike]: `%${q}%` } }
+                ]
+            },
+            limit: 10
+        });
+
+        res.status(200).json(machines);
+    } catch (error) {
+        console.error('Error searching machines:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getMachineByKks,
     createMachineLog,
@@ -251,5 +276,6 @@ module.exports = {
     getAllMachines,
     createMachine,
     updateMachine,
-    deleteMachine
+    deleteMachine,
+    searchMachines
 };

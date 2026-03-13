@@ -36,6 +36,47 @@ function HomePage() {
     const [configModalOpen, setConfigModalOpen] = useState(null); // 'AE' | 'VAE' | 'PCA' | null
     const [dbDevices, setDbDevices] = useState([]);
     const [userRole, setUserRole] = useState(null);
+    const [searchResults, setSearchResults] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchRef = useRef(null);
+
+    // Auto search effect
+    useEffect(() => {
+        const query = formData.KKSNumber?.trim();
+        if (!query || query.length < 2) {
+            setSearchResults([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        // Only search if user is typing, not when we've just selected a result
+        // We can check if the current machineName matches what it would be if found
+        // but it's simpler to just debounce it.
+        const timer = setTimeout(async () => {
+            try {
+                const response = await apiClient.get(API_ENDPOINTS.MACHINES.SEARCH(query), {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+                setSearchResults(response.data);
+                setShowSuggestions(response.data.length > 0);
+            } catch (err) {
+                console.error('Search error:', err);
+            }
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, [formData.KKSNumber]);
+
+    // Close suggestions on click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const modes = [
         {
@@ -578,7 +619,7 @@ function HomePage() {
                             <div>
                                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 mb-3 block">KKS Code</label>
                                 <div className="flex flex-col sm:flex-row gap-3">
-                                    <div className="relative flex-grow">
+                                    <div className="relative flex-grow" ref={searchRef}>
                                         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400">
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -590,9 +631,42 @@ function HomePage() {
                                             type="text"
                                             value={formData.KKSNumber}
                                             onChange={handleInputChange}
+                                            onFocus={() => searchResults.length > 0 && setShowSuggestions(true)}
+                                            autoComplete="off"
                                             className={`w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border ${errors.KKSNumber ? 'border-red-300 ring-4 ring-red-50' : 'border-slate-100 group-focus-within:border-primary hover:border-slate-200'} text-slate-900 font-bold focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none placeholder:text-slate-300`}
-                                            placeholder="Enter KKS link"
+                                            placeholder="Enter KKS Code"
                                         />
+
+                                        {/* Suggestions Dropdown */}
+                                        <AnimatePresence>
+                                            {showSuggestions && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    className="absolute z-50 left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                                                >
+                                                    <div className="max-h-60 overflow-y-auto">
+                                                        {searchResults.map((machine) => (
+                                                            <button
+                                                                key={machine.kks}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setFormData(f => ({ ...f, KKSNumber: machine.kks }));
+                                                                    fetchMachine(machine.kks);
+                                                                    setShowSuggestions(false);
+                                                                }}
+                                                                className="w-full text-left px-5 py-3 hover:bg-slate-50 transition-colors flex flex-col border-b border-slate-50 last:border-0 cursor-pointer"
+                                                            >
+                                                                <span className="font-bold text-slate-900 text-sm">{machine.kks}</span>
+                                                                <span className="text-xs text-slate-500 truncate">{machine.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                        
                                         {errors.KKSNumber && (
                                             <p className="absolute -bottom-6 left-1 text-xs text-red-500 font-bold flex items-center gap-1">
                                                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>

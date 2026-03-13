@@ -68,6 +68,10 @@ export default function DatabaseManagerPage() {
         password: ''
     });
     const [userSearch, setUserSearch] = useState('');
+    
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -106,6 +110,11 @@ export default function DatabaseManagerPage() {
             navigate('/login');
         }
     }, [navigate]);
+
+    // Reset pagination when tab changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab]);
 
     // --- Machine Management Logic ---
     const fetchMachines = async () => {
@@ -631,7 +640,7 @@ export default function DatabaseManagerPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100">
-                                                    {groupedModels.map(group => (
+                                                    {groupedModels.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(group => (
                                                         <NewModelRow key={group.key} group={group} onEdit={handleEditModelClick} onDelete={handleDeleteModelGroup} getThresholdDisplay={getThresholdDisplay} />
                                                     ))}
                                                 </tbody>
@@ -641,7 +650,7 @@ export default function DatabaseManagerPage() {
 
                                     {/* Mobile Cards */}
                                     <div className="md:hidden space-y-4">
-                                        {groupedModels.map(group => (
+                                        {groupedModels.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(group => (
                                             <div key={group.key} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="flex items-center gap-3 min-w-0">
@@ -656,7 +665,6 @@ export default function DatabaseManagerPage() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    {/* Added truncation for long KKS codes */}
                                                     <span className="px-2 py-1 bg-primary/5 border border-primary/10 rounded-md text-primary text-[10px] font-bold shrink-0 max-w-[120px] truncate">{group.kks}</span>
                                                 </div>
 
@@ -709,6 +717,13 @@ export default function DatabaseManagerPage() {
                                             </div>
                                         ))}
                                     </div>
+
+                                    <Pagination 
+                                        totalItems={groupedModels.length} 
+                                        itemsPerPage={itemsPerPage} 
+                                        currentPage={currentPage} 
+                                        onPageChange={setCurrentPage} 
+                                    />
                                 </>
                             ) : (
                                 <NewEmptyState icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" title="No Models Found" description="No models match the current search criteria." />
@@ -762,7 +777,7 @@ export default function DatabaseManagerPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100 text-sm">
-                                                    {devices.filter(d => d.device_name?.toLowerCase().includes(deviceSearch.toLowerCase())).map(device => (
+                                                    {devices.filter(d => d.device_name?.toLowerCase().includes(deviceSearch.toLowerCase())).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(device => (
                                                         <tr key={device.id} className="hover:bg-slate-50 transition-colors">
                                                             <td className="px-5 py-3 font-semibold text-slate-900">{device.device_name}</td>
                                                             <td className="px-5 py-3 text-center">
@@ -787,7 +802,7 @@ export default function DatabaseManagerPage() {
 
                                     {/* Mobile Cards */}
                                     <div className="md:hidden space-y-3">
-                                        {devices.filter(d => d.device_name?.toLowerCase().includes(deviceSearch.toLowerCase())).map(device => (
+                                        {devices.filter(d => d.device_name?.toLowerCase().includes(deviceSearch.toLowerCase())).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(device => (
                                             <div key={device.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                                                 <div className="flex items-start justify-between mb-3 gap-2">
                                                     <div className="min-w-0 pr-2">
@@ -818,6 +833,13 @@ export default function DatabaseManagerPage() {
                                             </div>
                                         ))}
                                     </div>
+
+                                    <Pagination 
+                                        totalItems={devices.filter(d => d.device_name?.toLowerCase().includes(deviceSearch.toLowerCase())).length} 
+                                        itemsPerPage={itemsPerPage} 
+                                        currentPage={currentPage} 
+                                        onPageChange={setCurrentPage} 
+                                    />
                                 </>
                             ) : (
                                 <NewEmptyState icon="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10" title="No Devices Found" description="No sensing devices have been registered yet." />
@@ -869,7 +891,7 @@ export default function DatabaseManagerPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100 text-sm">
-                                                    {machines.filter(m => (m.kks?.toLowerCase().includes(machineSearch.toLowerCase()) || m.name?.toLowerCase().includes(machineSearch.toLowerCase()))).map(m => (
+                                                    {machines.filter(m => (m.kks?.toLowerCase().includes(machineSearch.toLowerCase()) || m.name?.toLowerCase().includes(machineSearch.toLowerCase()))).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(m => (
                                                         <tr key={m.kks} className="hover:bg-slate-50 transition-colors">
                                                             <td className="px-5 py-3 font-bold text-primary">{m.kks}</td>
                                                             <td className="px-5 py-3 font-medium text-slate-700">{m.name}</td>
@@ -887,7 +909,7 @@ export default function DatabaseManagerPage() {
 
                                     {/* Mobile Cards */}
                                     <div className="md:hidden space-y-3">
-                                        {machines.filter(m => (m.kks?.toLowerCase().includes(machineSearch.toLowerCase()) || m.name?.toLowerCase().includes(machineSearch.toLowerCase()))).map(m => (
+                                        {machines.filter(m => (m.kks?.toLowerCase().includes(machineSearch.toLowerCase()) || m.name?.toLowerCase().includes(machineSearch.toLowerCase()))).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(m => (
                                             <div key={m.kks} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                                                 <div className="flex justify-between items-start mb-3 gap-2">
                                                     <div className="min-w-0 pr-2">
@@ -918,6 +940,13 @@ export default function DatabaseManagerPage() {
                                             </div>
                                         ))}
                                     </div>
+
+                                    <Pagination 
+                                        totalItems={machines.filter(m => (m.kks?.toLowerCase().includes(machineSearch.toLowerCase()) || m.name?.toLowerCase().includes(machineSearch.toLowerCase()))).length} 
+                                        itemsPerPage={itemsPerPage} 
+                                        currentPage={currentPage} 
+                                        onPageChange={setCurrentPage} 
+                                    />
                                 </>
                             )}
                         </motion.div>
@@ -967,7 +996,7 @@ export default function DatabaseManagerPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100 text-sm">
-                                                    {users.filter(u => u.username?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase())).map(u => (
+                                                    {users.filter(u => u.username?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase())).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(u => (
                                                         <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                                                             <td className="px-5 py-3">
                                                                 <div className="flex items-center gap-2.5">
@@ -994,7 +1023,7 @@ export default function DatabaseManagerPage() {
 
                                     {/* Mobile Cards */}
                                     <div className="md:hidden space-y-3">
-                                        {users.filter(u => u.username?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase())).map(u => (
+                                        {users.filter(u => u.username?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase())).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(u => (
                                             <div key={u.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                                                 <div className="flex justify-between items-center mb-3 gap-2">
                                                     <div className="flex items-center gap-2.5 min-w-0">
@@ -1021,6 +1050,13 @@ export default function DatabaseManagerPage() {
                                             </div>
                                         ))}
                                     </div>
+
+                                    <Pagination 
+                                        totalItems={users.filter(u => u.username?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase())).length} 
+                                        itemsPerPage={itemsPerPage} 
+                                        currentPage={currentPage} 
+                                        onPageChange={setCurrentPage} 
+                                    />
                                 </>
                             )}
                         </motion.div>
@@ -1368,6 +1404,84 @@ const NewEmptyState = ({ icon, title, description }) => (
         <p className="text-xs text-slate-400 max-w-xs leading-relaxed">{description}</p>
     </div>
 );
+
+const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (totalPages <= 1) return null;
+
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisiblePages = 5;
+
+        if (totalPages <= maxVisiblePages + 2) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            
+            if (currentPage > 3) {
+                pages.push('...');
+            }
+
+            const start = Math.max(2, currentPage - 1);
+            const end = Math.min(totalPages - 1, currentPage + 1);
+
+            if (currentPage <= 3) {
+                for (let i = 2; i <= 4; i++) pages.push(i);
+            } else if (currentPage >= totalPages - 2) {
+                for (let i = totalPages - 3; i <= totalPages - 1; i++) pages.push(i);
+            } else {
+                for (let i = start; i <= end; i++) pages.push(i);
+            }
+
+            if (currentPage < totalPages - 2) {
+                pages.push('...');
+            }
+
+            pages.push(totalPages);
+        }
+        return pages;
+    };
+
+    const pages = getPageNumbers();
+
+    return (
+        <div className="flex items-center justify-center gap-1 mt-6">
+            <button
+                disabled={currentPage === 1}
+                onClick={() => onPageChange(currentPage - 1)}
+                className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/5 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <div className="flex items-center gap-1">
+                {pages.map((page, index) => (
+                    page === '...' ? (
+                        <span key={`ellipsis-${index}`} className="px-2 text-slate-300 font-bold select-none text-sm">...</span>
+                    ) : (
+                        <button
+                            key={page}
+                            onClick={() => onPageChange(page)}
+                            className={`min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 rounded-lg text-sm font-bold transition-all ${
+                                currentPage === page
+                                    ? 'bg-primary text-white shadow-md shadow-primary/20'
+                                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                            }`}
+                        >
+                            {page}
+                        </button>
+                    )
+                ))}
+            </div>
+            <button
+                disabled={currentPage === totalPages}
+                onClick={() => onPageChange(currentPage + 1)}
+                className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/5 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+        </div>
+    );
+};
 
 const LoaderIcon = () => (
     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

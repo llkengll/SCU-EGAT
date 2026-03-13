@@ -18,6 +18,10 @@ const upload = multer({
     }
 });
 
+// @route   GET /machines/search
+// @desc    Search machines by KKS or name
+router.get('/search', authMiddleware, machineController.searchMachines);
+
 // @route   GET /machines
 // @desc    Get all machines
 router.get('/', authMiddleware, machineController.getAllMachines);

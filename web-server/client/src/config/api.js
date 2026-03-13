@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
     },
     MACHINES: {
         GET_BY_KKS: (kks) => `${API_BASE_URL}/api/machines/${kks}`,
+        SEARCH: (query) => `${API_BASE_URL}/api/machines/search?q=${query}`,
         CREATE_LOG: `${API_BASE_URL}/api/machines/logs`,
         GET_ALERTS: `${API_BASE_URL}/api/machines/alerts/all`,
     },

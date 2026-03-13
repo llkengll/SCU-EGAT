@@ -13,11 +13,21 @@ function DashboardPage() {
     const navigate = useNavigate();
     const Swal = useAlert();
     const [alerts, setAlerts] = useState([]);
+    const [machines, setMachines] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedAlert, setSelectedAlert] = useState(null);
     const [selectedPopupStep, setSelectedPopupStep] = useState(null);
     const [activePlotMethod, setActivePlotMethod] = useState('ae');
     const [lastUpdated, setLastUpdated] = useState(new Date());
+
+    const fetchMachines = async () => {
+        try {
+            const { data } = await apiClient.get('/api/machines');
+            setMachines(data);
+        } catch (error) {
+            console.error('Error fetching machines:', error);
+        }
+    };
 
     const fetchAlerts = async () => {
         setIsLoading(true);
@@ -58,10 +68,15 @@ function DashboardPage() {
         }
 
         fetchAlerts();
-        const interval = setInterval(fetchAlerts, 10000);
-        
+        fetchMachines();
+        const interval = setInterval(() => {
+            fetchAlerts();
+            fetchMachines();
+        }, 10000);
+
         const handleRefreshEvent = () => {
             fetchAlerts();
+            fetchMachines();
         };
         window.addEventListener('egat:refresh', handleRefreshEvent);
 
@@ -70,6 +85,14 @@ function DashboardPage() {
             window.removeEventListener('egat:refresh', handleRefreshEvent);
         };
     }, [navigate]);
+
+    const machineMap = React.useMemo(() => {
+        const map = {};
+        machines.forEach(m => {
+            map[m.kks] = m;
+        });
+        return map;
+    }, [machines]);
 
     const parseDate = (date) => {
         if (!date) return null;
@@ -261,7 +284,14 @@ function DashboardPage() {
                                 >
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <p className="font-black text-slate-900 text-lg leading-none mb-1.5">{alert.kks}</p>
+                                            <div className="flex flex-col mb-1.5">
+                                                <p className="font-black text-slate-900 text-lg leading-none mb-1">{alert.kks}</p>
+                                                {machineMap[alert.kks] && (
+                                                    <p className="text-[10px] font-bold text-primary/60 uppercase tracking-tight truncate max-w-[200px]">
+                                                        {machineMap[alert.kks].name}
+                                                    </p>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-2">
                                                 <div className={`w-1.5 h-1.5 rounded-full ${Math.round(parseFloat(alert.percent_match)) > 80 ? 'bg-red-500' : 'bg-orange-400'} animate-pulse`}></div>
                                                 <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
@@ -273,7 +303,7 @@ function DashboardPage() {
                                             <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${alert.measurement_type === 'sound' ? 'bg-primary/5 text-primary border-primary/10' : 'bg-cyan-50 text-cyan-700 border-cyan-100'}`}>
                                                 {alert.measurement_type}
                                             </span>
-                                            <span className="text-[8px] font-black text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md">ST.{alert.measurement_point}</span>
+                                            <span className="text-[8px] font-black text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md">PT.{alert.measurement_point}</span>
                                         </div>
                                     </div>
 
@@ -303,7 +333,7 @@ function DashboardPage() {
                             <thead>
                                 <tr className="text-left border-b border-slate-100/50">
                                     <th className="pb-5 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">KKS Code</th>
-                                    <th className="pb-5 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Type / Pnt</th>
+                                    <th className="pb-5 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Type / Point</th>
                                     <th className="pb-5 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Diagnosis Result</th>
                                     <th className="pb-5 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right">Details</th>
                                 </tr>
@@ -335,7 +365,14 @@ function DashboardPage() {
                                             onClick={() => setSelectedAlert(alert)}
                                         >
                                             <td className="py-6 px-3">
-                                                <p className="font-black text-slate-900 group-hover:text-primary transition-colors text-base tracking-tight leading-none mb-2">{alert.kks}</p>
+                                                <div className="flex flex-col mb-2">
+                                                    <p className="font-black text-slate-900 group-hover:text-primary transition-colors text-base tracking-tight leading-none mb-1">{alert.kks}</p>
+                                                    {machineMap[alert.kks] && (
+                                                        <p className="text-[10px] font-bold text-primary/60 uppercase tracking-tight">
+                                                            {machineMap[alert.kks].name}
+                                                        </p>
+                                                    )}
+                                                </div>
                                                 <div className="flex items-center gap-2" title={formatDateTime(alert.updated_at || alert.UpdatedAt || alert.created_at || alert.CreatedAt)}>
                                                     <div className={`w-2 h-2 rounded-full ${Math.round(parseFloat(alert.percent_match)) > 80 ? 'bg-red-500' : 'bg-orange-400'} animate-pulse`}></div>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -348,7 +385,7 @@ function DashboardPage() {
                                                     <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${alert.measurement_type === 'sound' ? 'bg-primary/5 text-primary border-primary/10' : 'bg-cyan-50 text-cyan-700 border-cyan-100'}`}>
                                                         {alert.measurement_type}
                                                     </span>
-                                                    <span className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-1 rounded-md">ST.{alert.measurement_point}</span>
+                                                    <span className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-1 rounded-md">PT.{alert.measurement_point}</span>
                                                 </div>
                                             </td>
                                             <td className="py-6 px-3 max-w-[240px]">
@@ -419,6 +456,16 @@ function DashboardPage() {
                                     </div>
                                     
                                     <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6">
+                                        <div className="col-span-2 bg-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/5 group/info transition-all hover:bg-white/10">
+                                            <p className="text-[9px] sm:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">Machine Detail</p>
+                                            <div className="flex flex-col gap-1">
+                                                <p className="text-sm sm:text-base text-secondary font-black">{machineMap[selectedAlert.kks]?.name || 'N/A'}</p>
+                                                <div className="flex gap-3">
+                                                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Unit: {machineMap[selectedAlert.kks]?.unit || '---'}</span>
+                                                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Plant: {machineMap[selectedAlert.kks]?.plant || '---'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div className="bg-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/5 group/info transition-all hover:bg-white/10">
                                             <p className="text-[9px] sm:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">Point ID</p>
                                             <p className="text-base sm:text-lg text-white font-black">#{selectedAlert.measurement_point}</p>
