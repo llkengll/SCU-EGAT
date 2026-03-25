@@ -19,6 +19,8 @@ export const API_ENDPOINTS = {
         NEXT_VERSION: `${API_BASE_URL}/ml/v1/next_version`,
         GET_MODELS: `${API_BASE_URL}/api/ml/models`,
         PREDICT_TEST_ALL: `${API_BASE_URL}/api/ml/predict-test-all`,
+        GET_TRAINING_FILES: (kks) => `${API_BASE_URL}/api/ml/training-files/${kks}`,
+        GET_MODELS_BY_KKS: (kks) => `${API_BASE_URL}/api/ml/models/by-kks/${kks}`,
     },
 };
 

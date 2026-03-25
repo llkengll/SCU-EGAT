@@ -23,7 +23,7 @@ const getModels = async (req, res) => {
             FROM ml_models m
             JOIN ml_methods mt ON m.method_id = mt.id
             WHERE LOWER(m.kks) = LOWER(:kks)
-              AND m.measurement_point = :measurement_point 
+              AND REPLACE(CAST(m.measurement_point AS TEXT), 'P', '') = REPLACE(CAST(:measurement_point AS TEXT), 'P', '')
               AND LOWER(m.measurement_type) = LOWER(:measurement_type)
             ORDER BY m.version DESC
         `, {
@@ -272,6 +272,37 @@ const predictTestAll = async (req, res) => {
     }
 };
 
+const listTrainingFiles = async (req, res) => {
+    try {
+        const { kks } = req.params;
+        const { point, type, folder = 'train' } = req.query;
+
+        if (!kks) {
+            return res.status(400).json({ error: 'Missing required parameter: kks' });
+        }
+
+        // Build prefix: {kks}/P{point}/{type}/{folder}/
+        // If point and type aren't provided, just search by kks prefix
+        let prefix = `${kks}/`;
+        if (point) {
+            prefix += `P${point}/`;
+            if (type) {
+                prefix += `${type}/${folder}/`;
+            }
+        }
+
+        const files = await minioService.listObjects(prefix);
+        
+        // Filter only .wav files (or any other relevant training files)
+        const trainingFiles = files.filter(f => f.name.toLowerCase().endsWith('.wav'));
+
+        res.status(200).json(trainingFiles);
+    } catch (error) {
+        console.error('Error listing training files:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getModels,
     getAllModels,
@@ -279,5 +310,6 @@ module.exports = {
     updateModelThreshold,
     deleteModel,
     predictTestAll,
-    proxyMlServer
+    proxyMlServer,
+    listTrainingFiles
 };

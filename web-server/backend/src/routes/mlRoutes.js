@@ -22,6 +22,7 @@ router.get('/models/by-kks/:kks', authMiddleware, mlController.getModelsByKks);
 router.put('/models/:id/threshold', authMiddleware, mlController.updateModelThreshold);
 router.delete('/models/:id', authMiddleware, mlController.deleteModel);
 router.post('/predict-test-all', authMiddleware, upload.single('audio'), mlController.predictTestAll);
+router.get('/training-files/:kks', authMiddleware, mlController.listTrainingFiles);
 router.all('/v1/*', authMiddleware, mlController.proxyMlServer);
 
 module.exports = router;

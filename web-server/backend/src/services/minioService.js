@@ -133,10 +133,32 @@ const uploadToAll = async (file, customFileName) => {
     }
 };
 
+const listObjects = async (prefix) => {
+    try {
+        const objectsList = [];
+        const stream = minioClient.listObjectsV2(BUCKET_NAME, prefix, true);
+
+        for await (const obj of stream) {
+            objectsList.push({
+                name: obj.name,
+                size: obj.size,
+                lastModified: obj.lastModified,
+                etag: obj.etag
+            });
+        }
+
+        return objectsList;
+    } catch (error) {
+        console.error(`Error listing objects with prefix ${prefix} from MinIO:`, error);
+        throw new Error(`Failed to list objects from MinIO: ${error.message}`);
+    }
+};
+
 module.exports = {
     initializeBucket,
     uploadFile,
     uploadToAll,
     deleteFolder,
+    listObjects,
     BUCKET_NAME
 };

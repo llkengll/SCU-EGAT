@@ -192,7 +192,7 @@ const MeasurementPage = () => {
                         }
                         groups[key].models.push({
                             id: m.id,
-                            type: m.method_name.toLowerCase(),
+                            type: (m.method_name || 'unknown').toLowerCase(),
                             path: m.model_path,
                             project_name: m.project_name,
                             version: m.version,

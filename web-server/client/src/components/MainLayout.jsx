@@ -27,6 +27,10 @@ const MainLayout = ({ children }) => {
         return { title: 'Lab Studio', type: 'page' };
       case '/DatabaseManagerPage':
         return { title: 'Database Admin', type: 'page' };
+      case '/TrainMLPage':
+        return { title: 'Training Select', type: 'page' };
+      case '/PredictMLPage':
+        return { title: 'Predict Test', type: 'page' };
       default:
         return { title: 'System', type: 'page' };
     }

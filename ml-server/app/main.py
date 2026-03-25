@@ -119,6 +119,93 @@ def predict():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+@app.route('/v1/predict_bulk', methods=['POST'])
+@require_auth
+def predict_bulk():
+    """Predicts multiple MinIO files using multiple specified models."""
+    data = request.get_json()
+    bucket = data.get('bucket', os.getenv('MINIO_BUCKET_NAME', 'scu-data'))
+    filenames = data.get('filenames', [])
+    models_to_run = data.get('models', []) # List of {type, path}
+    
+    if not filenames:
+        return jsonify({"error": "No filenames provided"}), 400
+    if not models_to_run:
+        return jsonify({"error": "No models provided"}), 400
+
+    import numpy as np
+    all_results = []
+    
+    try:
+        # We'll process file by file to minimize concurrent memory usage
+        # and we'll cache models during this single request block
+        loaded_models = {}
+
+        for filename in filenames:
+            wav_path = minio_service.download_audio(bucket, filename)
+            if not wav_path:
+                all_results.append({"filename": filename, "error": "Download failed"})
+                continue
+            
+            file_results = {"filename": filename, "predictions": {}}
+            
+            try:
+                for m_info in models_to_run:
+                    m_type = m_info.get('type', 'ae').lower()
+                    m_path = m_info.get('path')
+                    
+                    if not m_path or m_type not in MODELS:
+                        continue
+                    
+                    # Load model only if not already loaded in this request
+                    # Note: This is an in-memory session load, it might disrupt 
+                    # other requests if using a shared global MODELS instance.
+                    # But since this server is usually single-worker/single-purpose
+                    # or models are small, we load it here.
+                    cache_key = f"{m_type}_{m_path}"
+                    if cache_key not in loaded_models:
+                        local_bundle = minio_service.download_audio(bucket, m_path)
+                        if local_bundle:
+                            MODELS[m_type].load_model_from_file(local_bundle)
+                            if os.path.exists(local_bundle): os.remove(local_bundle)
+                            loaded_models[cache_key] = True
+                    
+                    # Manual threshold override if provided
+                    manual_threshold = m_info.get('manual_threshold')
+                    if manual_threshold is not None:
+                         MODELS[m_type].set_config({"MANUAL_THRESHOLD": float(manual_threshold)})
+
+                    status, mse, psd_pair = MODELS[m_type].detect_and_update(wav_path)
+                    
+                    psd_serializable = None
+                    if psd_pair:
+                        psd_serializable = [arr.tolist() if isinstance(arr, np.ndarray) else arr for arr in psd_pair]
+
+                    file_results["predictions"][m_type] = {
+                        "detection": status,
+                        "mse": float(mse),
+                        "threshold": float(MODELS[m_type].get_current_threshold()),
+                        "psd_pair": psd_serializable
+                    }
+                
+                all_results.append(file_results)
+                
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                all_results.append({"filename": filename, "error": str(e)})
+            finally:
+                if os.path.exists(wav_path): os.remove(wav_path)
+
+        return jsonify({
+            "status": "success",
+            "results": all_results
+        }), 200
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 @app.route('/v1/predict_test_all', methods=['POST'])
 @require_auth
 def predict_test_all():
@@ -200,6 +287,55 @@ def predict_test_all():
             "results": results
         }), 200
         
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if wav_path and os.listdir(os.path.dirname(wav_path)) and os.path.exists(wav_path):
+            os.remove(wav_path)
+
+@app.route('/v1/psd_preview', methods=['POST'])
+@require_auth
+def psd_preview():
+    """Extracts PSD from a file in MinIO for visualization without inference."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+        
+    bucket = data.get('bucket', os.getenv('MINIO_BUCKET_NAME', 'scu-data'))
+    filename = data.get('filename')
+    
+    if not bucket or not filename:
+        return jsonify({"error": "bucket and filename are required"}), 400
+        
+    wav_path = minio_service.download_audio(bucket, filename)
+    if not wav_path:
+        return jsonify({"error": "Failed to download audio from MinIO"}), 500
+        
+    try:
+        from app.core import features
+        import numpy as np
+        
+        # Standard spectral settings matching the default AE config
+        SR = 48000
+        N_FREQ_BINS = 1024
+        N_PERSEG = 2048
+        N_FFT = 2048
+        
+        # Extract PSD specifically for plotting
+        psd_real, freqs = features.extract_psd(wav_path, SR, N_PERSEG, N_FFT, N_FREQ_BINS, for_plot=True)
+        
+        if psd_real is None:
+            return jsonify({"error": "Spectral extraction failed"}), 500
+            
+        # Normalize for visualization consistency
+        psd_real = psd_real / (np.sum(psd_real) + 1e-12)
+        
+        return jsonify({
+            "status": "success",
+            "psd_pair": [freqs.tolist(), psd_real.tolist(), []] # Third element empty as no reconstruction for preview
+        }), 200
     except Exception as e:
         import traceback
         traceback.print_exc()

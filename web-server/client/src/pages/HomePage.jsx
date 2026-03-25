@@ -431,6 +431,42 @@ function HomePage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                     </svg>
                                 </button>
+
+                                <button 
+                                    onClick={() => navigate('/TrainMLPage')}
+                                    id="train-ml-minio-btn"
+                                    className="w-full p-4 bg-primary/5 hover:bg-primary text-primary hover:text-secondary rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-between group transition-all active:scale-[0.98] cursor-pointer border border-primary/10 shadow-sm hover:shadow-primary/20"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-primary/10 group-hover:bg-white/10 rounded-lg transition-colors">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                            </svg>
+                                        </div>
+                                        <span>Train ML</span>
+                                    </div>
+                                    <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+
+                                <button 
+                                    onClick={() => navigate('/PredictMLPage')}
+                                    id="predict-ml-btn"
+                                    className="w-full p-4 bg-secondary/5 hover:bg-secondary text-secondary-dark hover:text-primary rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-between group transition-all active:scale-[0.98] cursor-pointer border border-secondary/20 shadow-sm hover:shadow-secondary/20"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-secondary/10 group-hover:bg-white/10 rounded-lg transition-colors">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <span>Predict ML</span>
+                                    </div>
+                                    <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     )}

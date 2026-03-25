@@ -9,6 +9,8 @@ import MeasurementPage from './pages/MeasurementPage';
 import DashboardPage from './pages/DashboardPage';
 import CalibratePage from './pages/CalibratePage';
 import DatabaseManagerPage from './pages/DatabaseManagerPage';
+import TrainMLPage from './pages/TrainMLPage';
+import PredictMLPage from './pages/PredictMLPage';
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
             <Route path="/Dashboard" element={<DashboardPage />} />
             <Route path="/CalibratePage" element={<CalibratePage />} />
             <Route path="/DatabaseManagerPage" element={<DatabaseManagerPage />} />
+            <Route path="/TrainMLPage" element={<TrainMLPage />} />
+            <Route path="/PredictMLPage" element={<PredictMLPage />} />
           </Routes>
         </MainLayout>
       </AlertProvider>
