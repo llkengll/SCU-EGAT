@@ -121,19 +121,83 @@ Services should be available at:
 
 ---
 
-## Troubleshooting
+## 7. Advanced Infrastructure & Security
 
-### Check Logs
-```bash
-docker compose logs web-backend -f  # API Logs
-docker compose logs ml-server -f    # ML Inference Logs
+### Security Group Inbound Rules (Detail)
+| Type | Port | Source | Description |
+|------|------|--------|-------------|
+| SSH | 22 | Your IP | Admin Access |
+| HTTP | 80 | 0.0.0.0/0 | Nginx Proxy (Redirect) |
+| HTTPS | 443 | 0.0.0.0/0 | Web/API Traffic |
+| Custom | 9001 | Your IP | MinIO Web Console (Private) |
+
+### IAM Role (If using AWS Services)
+If your system eventually moves from local MinIO to **AWS S3** or from local Postgres to **AWS RDS**, attach an IAM Role to the EC2 instance instead of hardcoding credentials in `.env`:
+1. Create Role with `AmazonS3FullAccess`.
+2. Attach to Instance: `Actions -> Security -> Modify IAM Role`.
+3. Use `boto3` in Python or `aws-sdk` in Node WITHOUT credentials (it uses the instance metadata).
+
+### Persistent Storage (EBS Volumes)
+Since Docker containers are ephemeral, all critical data MUST be stored in the mapped volumes.
+- **Backups**: Enable **EBS Snapshots** in the AWS console to back up the entire instance disk on a daily schedule.
+- **Resize**: If MinIO runs out of space, you can increase the EBS volume size in AWS without stopping the instance. Then run:
+  `sudo resize2fs /dev/xvda1` (or your device name).
+
+---
+
+## 8. CI/CD with GitHub Actions
+
+To automate deployments when you push new code:
+
+1. Create `.github/workflows/deploy.yml`:
+```yaml
+name: Deploy to EC2
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd SCU-EGAT
+            git pull origin main
+            docker compose build
+            docker compose up -d
 ```
 
-### Memory Issues
-If the ML server crashes during training or prediction, ensure the EC2 instance has sufficient swap space:
+---
+
+## 9. Monitoring & Performance
+
+### Instance Logs
+View real-time traffic logs filtered by service:
 ```bash
-sudo fallocate -l 4G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
+docker compose logs -f nginx
 ```
+
+### Resource Management
+The ML server uses significant RAM during inference. Monitor usage with:
+```bash
+docker stats
+```
+If memory usage hits >90%, consider upgrading to a **t3.large** (8GB) or adding a larger **swapfile** (as described in the Troubleshooting section).
+
+### CloudWatch (Optional)
+Install the **Amazon CloudWatch Agent** on the EC2 host to push your Docker logs directly to the AWS CloudWatch Console for long-term retention and alerting.
+
+---
+
+## 10. Summary Checklist for Production
+1. [ ] Domain name configured (Route 53 or other DNS).
+2. [ ] Valid SSL certificate from Certbot/Let's Encrypt.
+3. [ ] Strict Security Group (Only 80/443 open to world).
+4. [ ] `.env` file contains strong, non-default passwords.
+5. [ ] Daily EBS snapshots enabled in AWS Console.
