@@ -84,3 +84,14 @@ scu-data/
 uploads/
 temp/
 # models/
+ml_benchmark/benchmark_runner.py
+ml_benchmark/generate_mock_data.py
+ml_benchmark/generate_plots.py
+ml_benchmark/plots/recon_AE_Full_FFT.png
+ml_benchmark/plots/recon_AE_Std_PSD.png
+ml_benchmark/plots/recon_PCA_Full_FFT.png
+ml_benchmark/plots/recon_PCA_Std_PSD.png
+ml_benchmark/plots/recon_VAE_Full_FFT.png
+ml_benchmark/plots/recon_VAE_Std_PSD.png
+ml_benchmark/plots/summary_extraction.png
+ml_benchmark/plots/summary_latency.png
